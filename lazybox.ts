@@ -9,27 +9,27 @@ export interface Lazy<T> {
 }
 
 export function Box<T>(x?: T): Maybe<T> {
-    return x ? [x] : [];
+    return typeof x === 'undefined' ? [] : [x];
 }
 
 export function Lazy<T>(exec: () => Promise<T>): Lazy<T> {
-    // @ts-ignore
-    return new Proxy(Box(exec), {
-        get(obj, key) {
-            let trap = {
-                exec,
-                flatMap<U>(fn: (x: T) => Lazy<U>) {
-                    return Lazy(
-                        () => exec().then((x) => fn(x).exec()),
-                    );
-                },
-                map<U>(fn: (x: T) => U) {
-                    return Lazy(() => exec().then(fn));
-                },
-            }
-            return Reflect.get(trap, key) || Reflect.get(obj, key);
+    let trap: Lazy<T> = {
+        exec,
+        flatMap(fn) {
+            return Lazy(() => exec().then((x) => fn(x).exec()));
+        },
+        map(fn) {
+            return Lazy(() => exec().then(fn));
+        },
+    };
+    let proxy = new Proxy([exec], {
+        get(target, key) {
+            return Reflect.get(trap, key) || Reflect.get(target, key);
         },
     });
+    return Object.assign({}, trap, proxy);
 }
 
-Lazy.of = Lazy;
+Lazy.of = function of<T>(x: T): Lazy<T> {
+    return Lazy(async () => x);
+};

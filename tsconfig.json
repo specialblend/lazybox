@@ -2,8 +2,8 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "allowJs": false,
-    "lib": ["ES2020"],
-    "target": "es6",
+    "lib": ["ES6","ES2020"],
+    "target": "ES5",
     "module": "commonjs",
     "declaration": true,
     "outDir": "./lib",

@@ -1,4 +1,7 @@
-import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
+import {
+    assertEquals,
+    assertNotEquals,
+} from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 import { Box, Lazy } from './lazybox.ts';
 
 let pitch = (err: any) => {
@@ -9,7 +12,7 @@ let add = (y: any) => (x: any) => x + y;
 let sub = (y: any) => (x: any) => x - y;
 let mul = (y: any) => (x: any) => x * y;
 
-Deno.test('Box().map', () => {
+Deno.test('Box(1)', () => {
     let x = 1;
 
     let plus1 = add(1);
@@ -21,6 +24,17 @@ Deno.test('Box().map', () => {
 
     assertEquals(y, (x + 1) * 7 - 13);
     assertEquals(z, (x + 1) * 7 - 13);
+});
+
+Deno.test('Box(undefined)', () => {
+    let x;
+    let fallback = 42;
+    let [unsafeResult = fallback] = [x].map(add(1)).map(mul(7)).map(sub(13));
+    let [safeResult = fallback] = Box(x).map(add(1)).map(mul(7)).map(sub(13));
+
+    assertEquals(safeResult, fallback);
+    assertNotEquals(unsafeResult, fallback);
+    assertEquals(unsafeResult, NaN);
 });
 
 Deno.test('Box().flatMap', () => {

@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment,@typescript-eslint/no-inferrable-types */
 import { Box, Lazy } from './lazybox';
 
 let add = (y: any) => (x: any) => x + y;
 let sub = (y: any) => (x: any) => x - y;
 let mul = (y: any) => (x: any) => x * y;
 
-test('Box().map', () => {
+test('Box(1).map', () => {
     let x = 1;
     let box = Box(x);
     let [y] = [x]
@@ -22,7 +23,18 @@ test('Box().map', () => {
     expect(z).toBe((x + 1) * 7 - 13);
 });
 
-test('Box().flatMap', () => {
+test('Box(undefined).map', () => {
+    let x;
+    let fallback = 42;
+    let [unsafeResult = fallback] = [x].map(add(1)).map(mul(7)).map(sub(13));
+    let [safeResult = fallback] = Box(x).map(add(1)).map(mul(7)).map(sub(13));
+
+    expect(safeResult).toEqual(fallback);
+    expect(unsafeResult).not.toEqual(fallback);
+    expect(unsafeResult).toEqual(NaN);
+});
+
+test('Box(1).flatMap', () => {
     let x = 1;
     let box = Box(x);
     let [y] = [x]

@@ -1,9 +1,9 @@
 export default {
     preset: 'ts-jest',
-    collectCoverageFrom: ['src/**/*.{js,ts}'],
     clearMocks: false,
     collectCoverage: true,
     coverageDirectory: 'coverage',
+    testPathIgnorePatterns: ['deno'],
     testEnvironment: 'node',
     coverageThreshold: {
         global: {
@@ -13,5 +13,4 @@ export default {
             statements: 100,
         },
     },
-    // globalSetup: './__mocks__/env.mock.ts',
 };

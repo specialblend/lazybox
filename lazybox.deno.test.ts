@@ -1,46 +1,39 @@
-import { Box, Lazy } from './lazybox';
+import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
+import { Box, Lazy } from './lazybox.ts';
+
+let pitch = (err: any) => {
+    throw err;
+};
 
 let add = (y: any) => (x: any) => x + y;
 let sub = (y: any) => (x: any) => x - y;
 let mul = (y: any) => (x: any) => x * y;
 
-test('Box().map', () => {
+Deno.test('Box().map', () => {
     let x = 1;
-    let box = Box(x);
-    let [y] = [x]
-        .map(add(1))
-        .map(mul(7))
-        .map((x) => x)
-        .map(sub(13));
-    let [z] = box
-        .map(add(1))
-        .map(mul(7))
-        .map((x) => x)
-        .map(sub(13));
 
-    expect(y).toBe((x + 1) * 7 - 13);
-    expect(z).toBe((x + 1) * 7 - 13);
+    let plus1 = add(1);
+    let times7 = mul(7);
+    let minus13 = sub(13);
+
+    let [y] = [x].map(plus1).map(times7).map(minus13);
+    let [z] = Box(x).map(plus1).map(times7).map(minus13);
+
+    assertEquals(y, (x + 1) * 7 - 13);
+    assertEquals(z, (x + 1) * 7 - 13);
 });
 
-test('Box().flatMap', () => {
+Deno.test('Box().flatMap', () => {
     let x = 1;
     let box = Box(x);
-    let [y] = [x]
-        .flatMap(add(1))
-        .flatMap(mul(7))
-        .flatMap((x) => x)
-        .flatMap(sub(13));
-    let [z] = box
-        .flatMap(add(1))
-        .flatMap(mul(7))
-        .flatMap((x) => x)
-        .flatMap(sub(13));
+    let [y] = [x].flatMap(add(1)).flatMap(mul(7)).flatMap(sub(13));
+    let [z] = box.flatMap(add(1)).flatMap(mul(7)).flatMap(sub(13));
 
-    expect(y).toBe((x + 1) * 7 - 13);
-    expect(z).toBe((x + 1) * 7 - 13);
+    assertEquals(y, (x + 1) * 7 - 13);
+    assertEquals(z, (x + 1) * 7 - 13);
 });
 
-test('lazyFetch(1)', async () => {
+Deno.test('lazyFetch', async () => {
     let x = 42;
     let _fetch = async (url: string) => x;
     let lazyFetch = (url: string) => Lazy(() => _fetch(url));
@@ -51,10 +44,10 @@ test('lazyFetch(1)', async () => {
         .map(add(13))
         .exec();
 
-    expect(await y).toBe(x + 1 - 7 + 13);
+    assertEquals(await y, x + 1 - 7 + 13);
 });
 
-describe('lazyElection', () => {
+(async function testLazyElection() {
     let Red = Symbol('Red');
     let Blue = Symbol('Blue');
 
@@ -64,7 +57,7 @@ describe('lazyElection', () => {
     let randomWinner = [Red, Blue][Math.round(Math.random())];
 
     let election = (): Player => randomWinner;
-    let lazyElection = () => Lazy(async () => election());
+    let lazyElection = (): Lazy<Player> => Lazy(async () => election());
 
     let complain = (winner: Player) =>
         Lazy(async (): Promise<News> => [winner, '💩']);
@@ -78,7 +71,7 @@ describe('lazyElection', () => {
             return winner;
         });
 
-    test('without flatMap', async () => {
+    Deno.test('without flatMap', async () => {
         // don't try this at home
         let someFutureElection = lazyElection()
             .map((winner) => complain(winner))
@@ -105,21 +98,21 @@ describe('lazyElection', () => {
             await (await someFutureElection.exec()).exec()
         ).exec();
 
-        expect(winner).toBe(randomWinner);
+        assertEquals(winner, randomWinner);
     });
 
-    test('with flatMap', async () => {
+    Deno.test('with flatMap', async () => {
         let someFutureElection = lazyElection()
             .flatMap((winner) => complain(winner))
             .flatMap(([winner, news]) => report(winner, news))
             .flatMap((winner) => celebrate(winner))
             .flatMap(([winner, news]) => report(winner, news));
 
-        expect(await someFutureElection.exec()).toBe(randomWinner);
+        assertEquals(await someFutureElection.exec(), randomWinner);
     });
-});
+})().catch(pitch);
 
-test('lazyClock', async () => {
+Deno.test('lazyClock', async () => {
     let now = new Date();
     let x = now.valueOf();
 
@@ -132,5 +125,5 @@ test('lazyClock', async () => {
 
     let y = futureClock.exec();
 
-    expect(await y).toBe(x + 42 - 13);
+    assertEquals(await y, x + 42 - 13);
 });

@@ -1,6 +1,6 @@
 {
   "name": "@specialblend/lazybox",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "tiny JS/TS Maybe & IO monads for the lazy functional programmer",
   "main": "index.js",
   "types": "index.d.ts",

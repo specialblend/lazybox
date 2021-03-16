@@ -1,6 +1,9 @@
-let Box = (x) => (x ? [x] : []);
-let Lazy = (exec) =>
-    new Proxy(Box(exec), {
+function Box(x) {
+    return x ? [x] : [];
+}
+
+function Lazy(exec) {
+    return new Proxy(Box(exec), {
         get(o, k) {
             return (
                 {
@@ -15,6 +18,7 @@ let Lazy = (exec) =>
             );
         },
     });
+}
 
 module.exports = {
     Box,

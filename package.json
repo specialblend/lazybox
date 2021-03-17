@@ -11,9 +11,7 @@
     "README.md"
   ],
   "scripts": {
-    "test": "npm run test:deno && npm run test:jest",
-    "test:jest": "jest",
-    "test:deno": "deno test lazybox.deno.test.ts"
+    "test": "jest"
   },
   "repository": {
     "type": "git",

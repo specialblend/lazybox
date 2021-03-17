@@ -73,10 +73,7 @@ describe('lazyElection', () => {
     type Player = typeof Red | typeof Blue;
     type News = [Player, string];
 
-    let randomWinner = [Red, Blue][Math.round(Math.random())];
-
-    let election = (): Player => randomWinner;
-    let lazyElection = () => Lazy(async () => election());
+    let randomWinner = () => [Red, Blue][Math.round(Math.random())];
 
     let complain = (winner: Player) =>
         Lazy(async (): Promise<News> => [winner, '💩']);
@@ -86,13 +83,19 @@ describe('lazyElection', () => {
 
     let report = (winner: Player, news: string) =>
         Lazy(async () => {
-            console.log(news);
+            console.log(winner, news);
             return winner;
         });
 
-    test('without flatMap', async () => {
+    describe('without flatMap', () => {
         // don't try this at home
-        let someFutureElection = lazyElection()
+
+        let expectedWinner = randomWinner();
+
+        let getWinner = jest.fn(async () => expectedWinner);
+        let createLazyElection = jest.fn(() => Lazy(getWinner));
+
+        let someFutureElection = createLazyElection()
             .map((winner) => complain(winner))
             .map((result) =>
                 Lazy(async () => {
@@ -113,21 +116,46 @@ describe('lazyElection', () => {
                 }),
             );
 
-        let winner = await (
-            await (await someFutureElection.exec()).exec()
-        ).exec();
+        let winner: Player;
+        beforeAll(async () => {
+            winner = await (
+                await (await someFutureElection.exec()).exec()
+            ).exec();
+        });
 
-        expect(winner).toBe(randomWinner);
+        test('it returns expected winner', () => {
+            expect(winner).toBe(expectedWinner);
+        });
+
+        test('it only calls election once', () => {
+            expect(getWinner).toHaveBeenCalledTimes(1);
+        });
     });
 
-    test('with flatMap', async () => {
-        let someFutureElection = lazyElection()
+    describe('with flatMap', () => {
+        let expectedWinner = randomWinner();
+        let getWinner = jest.fn(async () => expectedWinner);
+        let createLazyElection = jest.fn(() => Lazy(getWinner));
+
+        let someFutureElection = createLazyElection()
             .flatMap((winner) => complain(winner))
             .flatMap(([winner, news]) => report(winner, news))
             .flatMap((winner) => celebrate(winner))
             .flatMap(([winner, news]) => report(winner, news));
 
-        expect(await someFutureElection.exec()).toBe(randomWinner);
+        let winner: Player;
+
+        beforeAll(async () => {
+            winner = await someFutureElection.exec();
+        });
+
+        test('it returns expected winner', () => {
+            expect(winner).toBe(expectedWinner);
+        });
+
+        test('it only calls election once', () => {
+            expect(getWinner).toHaveBeenCalledTimes(1);
+        });
     });
 });
 
